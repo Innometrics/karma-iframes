@@ -32,9 +32,10 @@
 		var iframe = this.iframe;
 
 		// Remap console
-		iframe.addEventListener('DOMContentLoaded', () => {
-			iframe.contentWindow.console = console;
-		}, false);
+        this.domContentLoadedListener = () => {
+            iframe.contentWindow.console = console;
+        }
+        iframe.addEventListener('DOMContentLoaded', this.domContentLoadedListener, false);
 		
 		// Listen to messages from the iFrame
 		this.messageListener = (msg) => {
@@ -110,12 +111,14 @@
     Suite.prototype.onComplete = function() {};
 	
 	Suite.prototype.cleanup = function() {
+        this.iframe.removeEventListener('DOMContentLoaded', this.domContentLoadedListener, false);
         this.iframe.parentNode.removeChild(this.iframe);
         this.wrapper.parentNode.removeChild(this.wrapper);
         window.removeEventListener('message', this.messageListener, false);
         this.iframe = null;
         this.wrapper = null;
         this.messageListener = null;
+        this.domContentLoadedListener = null;
 	}
 
 	// Map suite files to suite instances
@@ -189,6 +192,7 @@
 		// Have all suites completed?
 		let completedSuites = suitesWithState('complete');
 		if(Object.keys(completedSuites).length < Object.keys(suites).length) {
+            result.coverage = null;
 			return;
 		}
 		// All suites have completed, send the “complete” message to karma
@@ -197,7 +201,7 @@
 			console.debug(`All ${Object.keys(suites).length} suites have completed, ran ${finished} of ${total} tests`);
 		}
         if (result.coverage) {
-            result.coverage = coverageCollector.getFinalCoverage();
+            result.coverage = coverageCollector.getCoverage();
         }
 		karma.complete(result);
 	}
@@ -241,18 +245,24 @@
     // (supports only one coverage format)
     //
     var coverageCollector = {
-        coverages: [],
+        coverage: {},
+
         addCoverage: function (coverage) {
-            this.coverages.push(coverage);
+            this.coverage = this.mergeCoverages([coverage]);
         },
 
-        getFinalCoverage: function () {
-            var coverages = this.coverages;
-            return coverages.length ? this.mergeCoverages(coverages) : null;
+        getCoverage: function () {
+            var coverage = this.coverage;
+            this.cleanup();
+            return coverage;
+        },
+
+        cleanup: function () {
+            this.coverages = {};
         },
 
         mergeCoverages: function (coverages) {
-            var mergedCoverage = {},
+            var mergedCoverage = this.coverage,
                 collector = this;
 
             coverages.forEach(function (coverageBySrc) {
