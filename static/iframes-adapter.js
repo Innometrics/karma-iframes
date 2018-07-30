@@ -144,8 +144,8 @@
 		return Object.keys(suites)
 			.map(function (path) {return suites[path]; })
 			.reduce(function (sum, suite) {
-				var total = sum.total + suite.total;
-				var finished = sum.finished + suite.finished;
+                var total = sum[0] + suite.total;
+                var finished = sum[1] + suite.finished;
 				return [total, finished];
 			}, [0, 0]);
 	}
