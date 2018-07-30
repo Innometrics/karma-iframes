@@ -28,7 +28,7 @@ window.__karma__ = (function(hasParent) {
 	}
 
 	DIRECT_METHODS = ['error', 'log', 'complete', 'result'];
-	DIRECT_METHODS.forEach(method => {
+	DIRECT_METHODS.forEach(function (method) {
 		karma[method] = function() {
 			callParentKarmaMethod(method, Array.prototype.slice.call(arguments));
 		};
