@@ -3,7 +3,7 @@
 
 (function(karma) {
 	'use strict';
-	
+
 	var isDebug = document.location.href.indexOf('debug.html') > -1;
 
 	function Suite(path, showTitle) {
@@ -11,8 +11,8 @@
         // • 'pending' (before the total is known)
         // • 'started' (after total is known but before all suites have executed)
         // • 'complete' (when total === finished)
-        this.state = 'pending',
-            this.fileName = path.match(/\/([^/]+)\.iframe\.html$/)[1];
+        this.state = 'pending';
+        this.fileName = path.match(/\/([^/]+)\.iframe\.html$/)[1];
         this.path = path;
         this.iframe = document.createElement('iframe');
         this.wrapper = document.createElement('span');
@@ -20,23 +20,22 @@
         this.total = NaN;
         this.finished = 0;
 	}
-	
+
 	Suite.prototype.init = function(suites) {
 		if(isDebug) {
-			console.debug(`Loaded suite ${this.fileName}`);
+			console.debug('Loaded suite ' + this.fileName);
 		}
-		var suite = this;
 		// Add the suite as pending
-		suites[this.path] = suite;
-		
+		suites[this.path] = this;
+
 		var iframe = this.iframe;
 
 		// Remap console
         this.domContentLoadedListener = () => {
             iframe.contentWindow.console = console;
-        }
+        };
         iframe.addEventListener('DOMContentLoaded', this.domContentLoadedListener, false);
-		
+
 		// Listen to messages from the iFrame
 		this.messageListener = (msg) => {
 			if(!msg.source || iframe.contentWindow !== msg.source) {
@@ -67,7 +66,7 @@
 
 	Suite.prototype.run = function() {
         if(isDebug) {
-            console.debug(`Running suite ${this.fileName}`);
+            console.debug('Running suite ' + this.fileName);
         }
         if (this.showTitle) {
             this.wrapper.style.float = 'left';
@@ -80,7 +79,7 @@
 
 	Suite.prototype.started = function(total) {
 		if(isDebug) {
-			console.debug(`Suite ${this.fileName} has started, expects ${total} tests`);
+            console.debug('Suite ' + this.fileName + ' has started, expects ' + total + ' tests');
 		}
 		this.state = 'started';
 		this.total = total;
@@ -89,7 +88,7 @@
 
 	Suite.prototype.result = function(result) {
 		if(isDebug) {
-			console.debug(`Suite ${this.fileName} has a result, ${result}`);
+            console.debug('Suite ' + this.fileName + ' has a result, ' + result);
 		}
 		result.suite = result.suite || [];
 		result.suite.unshift(this.fileName.replace(/\.iframe\.html$/, ''));
@@ -100,7 +99,7 @@
 
 	Suite.prototype.complete = function(result) {
 		if(isDebug) {
-			console.debug(`Suite ${this.fileName} has completed with ${this.finished} of ${this.total} tests`);
+            console.debug('Suite ' + this.fileName + ' has completed with ' + this.finished + ' of ' + this.total + ' tests');
 		}
 		this.state = 'complete';
 		suiteComplete(result);
@@ -109,7 +108,7 @@
 	};
 
     Suite.prototype.onComplete = function() {};
-	
+
 	Suite.prototype.cleanup = function() {
         this.iframe.removeEventListener('DOMContentLoaded', this.domContentLoadedListener, false);
         this.iframe.parentNode.removeChild(this.iframe);
@@ -119,17 +118,17 @@
         this.wrapper = null;
         this.messageListener = null;
         this.domContentLoadedListener = null;
-	}
+	};
 
 	// Map suite files to suite instances
 	var suites = {};
-	
+
 	function suitesWithState(state) {
-		let isNeg = state[0] === '!';
+		var isNeg = state[0] === '!';
 		if(isNeg) {
 			state = state.substr(1);
 		}
-		let result = {};
+        var result = {};
 		Object.keys(suites)
 			.filter(path => {
 				return isNeg ? suites[path].state !== state : suites[path].state === state;
@@ -138,7 +137,7 @@
 				result[path] = suites[path];
 			});
 		return result;
-	};
+	}
 
 	function countTests() {
 		return Object.keys(suites)
@@ -151,7 +150,7 @@
 	}
 
 	function hasPendingSuites() {
-		let startedSuites = suitesWithState('!pending');
+        var startedSuites = suitesWithState('!pending');
 		return Object.keys(startedSuites).length < Object.keys(suites).length;
 	}
 
@@ -165,7 +164,7 @@
 		// Send result directly
 		karma.result(result);
 	}
-	
+
 	// Some suite has started
 	function suiteStarted() {
 		// Have all suites started?
@@ -173,9 +172,9 @@
 			return;
 		}
 		// All suites have started, send the total to karma
-		let [total, finished] = countTests();
+        var [total, finished] = countTests();
 		if(isDebug) {
-			console.debug(`All ${Object.keys(suites).length} suites have started, expecting ${total} tests (of which ${finished} have already finished)`);
+            console.debug('All ' + Object.keys(suites).length + ' suites have started, expecting ' + total + ' tests (of which ' + finished + ' have already finished)');
 		}
 		karma.info({total});
 		// Send the pending results
@@ -190,15 +189,15 @@
         }
 
 		// Have all suites completed?
-		let completedSuites = suitesWithState('complete');
+        var completedSuites = suitesWithState('complete');
 		if(Object.keys(completedSuites).length < Object.keys(suites).length) {
             result.coverage = null;
 			return;
 		}
 		// All suites have completed, send the “complete” message to karma
 		if(isDebug) {
-			let [total, finished] = countTests();
-			console.debug(`All ${Object.keys(suites).length} suites have completed, ran ${finished} of ${total} tests`);
+            var [total, finished] = countTests();
+            console.debug('All ' + Object.keys(suites).length + ' suites have completed, ran ' + finished + ' of ' + total + ' tests');
 		}
         if (result.coverage) {
             result.coverage = coverageCollector.getCoverage();
@@ -208,13 +207,13 @@
 
     function start () {
         // jshint validthis: true
-        let files = Object.keys(karma.files).filter(file => file.match(/\.iframe\.html$/));
-        let concurrency = parseInt(karma.config.concurrency, 10) || 10;
-        let showFrameTitle = karma.config.showFrameTitle || false;
-        let ran = 0;
-        let preparedSuites = [];
+        var files = Object.keys(karma.files).filter(file => file.match(/\.iframe\.html$/));
+        var concurrency = parseInt(karma.config.concurrency, 10) || 10;
+        var showFrameTitle = karma.config.showFrameTitle || false;
+        var ran = 0;
+        var preparedSuites = [];
         preparedSuites = files.map(file => {
-            let suite = new Suite(file, showFrameTitle);
+            var suite = new Suite(file, showFrameTitle);
             suite.init(suites);
             return suite;
         });
@@ -222,7 +221,7 @@
         preparedSuites.reverse();
 
         function runNextSuite () {
-            let suite = preparedSuites.pop();
+            var suite = preparedSuites.pop();
             if (!suite) {
                 return;
             }
