@@ -20,13 +20,7 @@ window.__karma__ = (function(hasParent) {
 
 	function callParentKarmaMethod(methodName, args) {
 		args.unshift('iframe-test-results', methodName);
-        var origin;
-        try {
-            origin = window.location.origin;
-        } catch (e) {
-            origin = '*';
-        }
-		window.parent.postMessage(args, origin);
+		window.parent.postMessage(args, '*');
 	}
 
 	function postToMainContext(message, arg) {
