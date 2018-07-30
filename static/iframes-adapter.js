@@ -143,9 +143,9 @@
 	function countTests() {
 		return Object.keys(suites)
 			.map(function (path) {return suites[path]; })
-			.reduce(function ([total, finished], suite) {
-				total += suite.total;
-				finished += suite.finished;
+			.reduce(function (sum, suite) {
+				var total = sum.total + suite.total;
+				var finished = sum.finished + suite.finished;
 				return [total, finished];
 			}, [0, 0]);
 	}
@@ -173,11 +173,14 @@
 			return;
 		}
 		// All suites have started, send the total to karma
-        var [total, finished] = countTests();
+        var cntT = countTests();
+        var total = cntT[0],
+            finished =cntT[1];
+
 		if(isDebug) {
             console.debug('All ' + Object.keys(suites).length + ' suites have started, expecting ' + total + ' tests (of which ' + finished + ' have already finished)');
 		}
-		karma.info({total});
+		karma.info({total: total});
 		// Send the pending results
 		pendingResults.forEach(sendResult);
 		pendingResults = [];
@@ -197,7 +200,9 @@
 		}
 		// All suites have completed, send the “complete” message to karma
 		if(isDebug) {
-            var [total, finished] = countTests();
+            var cntT = countTests();
+            var total = cntT[0],
+                finished =cntT[1];
             console.debug('All ' + Object.keys(suites).length + ' suites have completed, ran ' + finished + ' of ' + total + ' tests');
 		}
         if (result.coverage) {
