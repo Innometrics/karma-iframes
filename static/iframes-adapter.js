@@ -26,18 +26,19 @@
 			console.debug('Loaded suite ' + this.fileName);
 		}
 		// Add the suite as pending
+        var me = this;
 		suites[this.path] = this;
 
 		var iframe = this.iframe;
 
 		// Remap console
-        this.domContentLoadedListener = () => {
+        this.domContentLoadedListener = function () {
             iframe.contentWindow.console = console;
         };
         iframe.addEventListener('DOMContentLoaded', this.domContentLoadedListener, false);
 
 		// Listen to messages from the iFrame
-		this.messageListener = (msg) => {
+		this.messageListener = function (msg) {
 			if(!msg.source || iframe.contentWindow !== msg.source) {
 				return; // ignore messages from other iframes
 			}
@@ -51,11 +52,11 @@
 			var arg = msg.data[2];
 
 			if(message === 'started') {
-				this.started(arg);
+                me.started(arg);
 			} else if(message === 'result') {
-				this.result(arg);
+                me.result(arg);
 			} else if(message === 'complete') {
-				this.complete(arg);
+                me.complete(arg);
 			} else {
 				// Other message (log, error); send directly to karma
 				karma[message].apply(karma, msg.data.slice(2));
@@ -130,10 +131,10 @@
 		}
         var result = {};
 		Object.keys(suites)
-			.filter(path => {
+			.filter(function (path) {
 				return isNeg ? suites[path].state !== state : suites[path].state === state;
 			})
-			.forEach(path => {
+			.forEach(function (path) {
 				result[path] = suites[path];
 			});
 		return result;
@@ -141,8 +142,8 @@
 
 	function countTests() {
 		return Object.keys(suites)
-			.map(path => suites[path])
-			.reduce(([total, finished], suite) => {
+			.map(function (path) {return suites[path]; })
+			.reduce(function ([total, finished], suite) {
 				total += suite.total;
 				finished += suite.finished;
 				return [total, finished];
@@ -207,12 +208,12 @@
 
     function start () {
         // jshint validthis: true
-        var files = Object.keys(karma.files).filter(file => file.match(/\.iframe\.html$/));
+        var files = Object.keys(karma.files).filter(function (file) {return file.match(/\.iframe\.html$/);});
         var concurrency = parseInt(karma.config.concurrency, 10) || 10;
         var showFrameTitle = karma.config.showFrameTitle || false;
         var ran = 0;
         var preparedSuites = [];
-        preparedSuites = files.map(file => {
+        preparedSuites = files.map(function (file) {
             var suite = new Suite(file, showFrameTitle);
             suite.init(suites);
             return suite;
