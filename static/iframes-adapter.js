@@ -43,13 +43,23 @@
 				return; // ignore messages from other iframes
 			}
 
+            var data = msg.data;
+
+            if (typeof data === 'string') {
+                try {
+                    data = JSON.parse(data);
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+
 			// Provide some namespace for the message
-			if(!Array.isArray(msg.data) || msg.data[0] !== 'iframe-test-results') {
+			if(!Array.isArray(data) || data[0] !== 'iframe-test-results') {
 				return;
 			}
 
-			var message = msg.data[1];
-			var arg = msg.data[2];
+			var message = data[1];
+			var arg = data[2];
 
 			if(message === 'started') {
                 me.started(arg);
@@ -59,7 +69,7 @@
                 me.complete(arg);
 			} else {
 				// Other message (log, error); send directly to karma
-				karma[message].apply(karma, msg.data.slice(2));
+				karma[message].apply(karma, data.slice(2));
 			}
 		};
 		window.addEventListener('message', this.messageListener, false);

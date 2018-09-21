@@ -20,7 +20,7 @@ window.__karma__ = (function(hasParent) {
 
 	function callParentKarmaMethod(methodName, args) {
 		args.unshift('iframe-test-results', methodName);
-		window.parent.postMessage(args, '*');
+		window.parent.postMessage(JSON.stringify(args), '*');
 	}
 
 	function postToMainContext(message, arg) {
